@@ -1,0 +1,371 @@
+# Project_R_Codes
+# Problem Set 2 Solutions
+# Pranav Kalyanpur
+# pxk174430
+
+install.packages('data.table')
+install.packages('ggplot2')
+install.packages('RColorBrewer')
+install.packages('tidyverse')
+install.packages('broom')
+install.packages('car')
+
+rm(list=ls(all=TRUE))
+library(data.table)
+library(ggplot2)
+library(RColorBrewer)
+library(tidyverse)
+library(broom)
+library(car)
+
+#####################################2.1################################################################################################################################################
+
+vote <- fread('vote1.csv')
+summary(vote)
+
+exa <- log(vote$expendA)
+exb <- log(vote$expendB)
+
+model1 <- lm(voteA~exa+exb+prtystrA,data=vote)
+summary(model1)
+
+# The model can be written as follows;
+# voteA = 45.089 + 6.081*log(expendA) - 6.6156*log(expendB) + 0.152*prtystrA, with an R-square value of 79.25% and sample size of 173 
+# beta-1 in this case is 6.081, which means that every 1$ change in candidate A's campaign expenditure will lead to an approximate 6% change in the votes received by candidate A (voteA)
+
+# The null hypothesis is as follows: H0: beta-1 = -beta-2, beta-1 + beta-2 = 0
+# This basically means that, if the expenditures of both candidates A and B change by the same percentage, voteA remains unchanged
+
+# From the model, it is clear that both expenditures of candidate A and B are significant, having t-values of 15.92 and -17.46 respectively. Which means that, every 1% increase in candidate A's expenditure
+# increases the percentage of votes towards A by approximately 6% and every 1% increase in candidate B's expenditure decreases the percentage of votes towards A by approximately 6.6%.
+# The null hypothesis from above is that beta-1 + beta-2 = 0, which in this case is true since the co-efficients of expendA and expendB are of approximately constant magnitudes with their signs reversed,
+# which satisfies the null hypothesis
+
+# The hypothesis in the second part of the question can be written as: theta1 = beta1 + beta2, 
+# Re-arranging we get, beta1 = theta1-beta2
+
+th <- exb-exa
+model2 <- lm(voteA~exa+th+prtystrA,data=vote)
+summary(model2)
+
+# We know that the t-stat = difference between means/standard error, difference between means is theta1 = beta1+beta2 which is approximately -0.534 from the model above and the standard error is approximately 0.533
+# Therefore we get the t-stat to be approximately = -0.534/0.533 ~= -1, which means we fail to reject the null hypothesis H0, that is beta1 = -beta2
+
+###################################2.2#######################################################################################################################################
+
+law <- fread('lawsch85.csv')
+summary(law)
+
+# The model is as follows; log(salary) = b0 + b1LSAT + b2GPA + b3log(libvol) + b4log(cost) + b5rank + u
+
+sal <- log(law$salary)
+lib <- log(law$libvol)
+c <- log(law$cost)
+
+model3 <- lm(sal~LSAT+GPA+lib+c+rank,data=law)
+summary(model3)
+
+# The model can be written as follows; log(salary) = 8.3432 + 0.005*LSAT + 0.2475*GPA + 0.09499*lib + 0.03755*c - 0.0033*rank with an R-square value of 84.17% and sample size of 156
+# The null hypothesis is that H0: b5 = 0
+# We can estimate from the model that the t-statistic is -0.0033246/0.0003485 = -9.539742, which is much greater than the critical value at a 95% confidence interval for a two-tailed test (two-sided approach)
+# Thus, we reject the null hypothesis that b5=0 i.e, the rank of law schools has no ceteris paribus effect on median starting salary
+
+# The t-statistic on LSAT is approximately 0.0047/0.00401 ~= 1.174, hence we can conclude that it is insignificant at the 95% confidence level and the t-statistic on GPA is approximately 0.2475/0.0900371 ~= 2.75 so it is significant at the 95% level. 
+# In order to test joint significance, we should note the F-statistic and come to a conclusion. This can be done as follows;
+
+# Model omitting LSAT and GPA, we have
+model4 <- lm(sal~lib+c+rank,data=law)
+summary(model4)
+
+# The restricted regression model omitting LSAT and GPA has an R-square value of 82.21%
+# Therefore the f-stat can be calculated as follows: f-stat = ((0.8417 - 0.8221)/2)/((1-0.8417)/130) ~= 8.49, which means that LSAT and GPA are both jointly significant
+
+# Adding clsize and faculty to the equation above, the model now becomes
+model5 <- lm(sal~LSAT+GPA+lib+c+rank+clsize+faculty,data=law)
+summary(model5)
+
+# Including clsize and faculty to the model above gives an F-statistic of approximately 0.95 which is less than one. This means that clsize and faculty are not jointly significant
+
+# Some factors that might influence the rank of the law school and are not included in the salary regression are admission intakes every year, student-faculty ratio, faculty publication record, faculty educational and professional expertise, academic reputation etc.
+
+#######################################2.3#######################################################################################################
+
+h <- fread('hprice1.csv')
+summary(h)
+
+pr <- log(h$price)
+
+model6 <- lm(pr~sqrft+bdrms,data=h)
+summary(model6)
+
+# The above model can be written as follows; log(price) = 4.766 + 0.0003794*sqrft + 0.0289*bdrms
+# It is given that theta1 = 150b1 + b2, plugging this into the model and analyzing the results, we have 
+# theta1 = 150*0.000379 + 0.0289 = 0.08575. This means that, an additional 150 sqrft bedroom in the house will increase the price by approximately 8.6%
+
+
+# As we know from earlier, theta1 = 150b1 + b2
+# b2 = theta1 - 150b1
+# plugging this value into the original model we get,
+# log(price) = b0 + b1(sqrft - 150bdrms) + theta1bdrms + u
+
+# Doing a regression analysis on the above model we get,
+d <- h$sqrft - 150*h$bdrms
+model7 <- lm(pr~d+bdrms,data=h)
+summary(model7)
+
+# From the above model we have theta1 = 0.0858 and se(theta1) = 0.0268, therefore, for a 95% confidence interval we have 0.0858 +/- 1.98*0.0268 where 1.98 is the critical value and df is 85
+
+#######################################2.4########################################################################################################
+
+w <- fread('wage2.csv')
+summary(w)
+
+wag <- log(w$wage)
+model8 <- lm(wag~educ+exper+tenure,data=w)
+summary(model8)
+
+# Based on the model above, we can write the null hypothesis that another year of general workforce experience has the same effect on log(wage) as another year of tenure with the current employer as follows;
+# H0: b2 = b3 (Null Hypothesis)
+
+# Two-sided approach: Let us take theta2 = b2 - b3
+
+# log(wage) = b0 + b1educ + theta2exper+ b3(exper + tenure)
+
+o <- w$exper + w$tenure
+
+model9 <- lm(wag~educ+exper+o,data=w)
+
+summary(model9)
+
+# From the above model, we can see that theta2 = 0.0025 and se(theta2) = 0.0047; 
+# For 5% confidence interval, we can write it as 0.0025 +/- 1.98*0.0047 which is approximately -0.0072 to 0.0112. Since 0 lies in this interval, we can conclude that theta2 is statistically different from 0
+# Hence, we fail to reject the null hypothesis H0: b2 = b3 at the 5% level
+
+#####################################2.5##########################################################################################################
+
+fo <- fread('401ksubs.csv')
+summary(fo)
+
+sum(fo$fsize=='1')
+# There are totally 2017 single-person households in the dataset
+
+model10 <- lm(nettfa~inc+age,data=subset(fo,fsize==1))
+summary(model10)
+# The model can be written as follows; nettfa = -43.039 + 0.799*inc + 0.84266*age with an R-square value of 11.93% and sample size of 2017
+# We can conclude from the above model that, when annual income increases by $1,000, the predicted net financial assets increase by approximately $800, and when age increases by one year, the predicted net financial assets
+# increase by approximately. This seems a little strange because as age increases, more wealth should be accumulated
+
+# The intercept in the above equation, which is -43.039, is very interesting because, it is the net financial assets of a zero-year old, with zero income
+
+abs(qt(0.01,2014))
+# The critical value for the 1% confidence interval is 2.328
+
+# From the above model, we can calculate the t-statistic as follows;
+# t-stat for the null = (0.84266-1)/0.09202 = -1.709846
+# Absolute value would be 1.709846
+# Since the t-stat is lesser than the critical value, we fail to reject the null hypothesis 
+# at 1% significance level
+
+pt(-1.709846,2017)
+# Hence the p-value for the above model is 0.04372
+
+# It is clear from the above calculation that the t-stat is less than the critical value
+# Hence, we fail to reject the null at 1% significance level i.e, b2 = 0
+
+# Performing a simple regression on netfa and inc we get,
+
+model11 <- lm(nettfa~inc,data=subset(fo,fsize==1))
+summary(model11)
+
+# From the above model we find that co-efficient on inc is 0.8207 which is almost a 0.03 increase from the above model.
+# Thus we can say that the overall effect is the same.
+
+#######################################2.6#########################################################################################################
+
+k <- fread('kielmc.csv')
+summary(k)
+
+pr <- log(k$price)
+d <- log(k$dist)
+
+model12 <- lm(pr~d,data=k)
+summary(model12)
+
+# The above model can be written as log(price) = 8.25750 + 0.31722*log(dist) with an R-square value of 11.99% and sample size of 321 
+# Under the condition that the presence of the incinerator depresses the housing prices, normally the co-efficient of dist i.e, b1 would have a negative sign associated with it. But in this case,
+# as we can see from the above model that as the distance increases by 1%, the price increases by approximately 0.327%.
+# It is better to have a house far away from the incinerator, based on the condition given above
+
+# Adding the following parameters to the model above namely, log(intst), log(area), log(land), rooms, baths, and age we get
+
+i <- log(k$intst)
+a <- log(k$area)
+l <- log(k$land)
+
+model13 <- lm(pr~d+i+a+l+k$rooms+k$baths+k$age)
+summary(model13)
+
+# From the above model it is clear that the co-efficient for log(dist) is now approximately 0.02818. The effect is much smaller now and is also statistically insignificant. This is
+# mainly because we have explicitly controlled all other factors that determine the quality of a home and its location from the incinerator. Now, we can say that this is consistent 
+# with the hypothesis that the incinerator distance depressed the housing prices
+
+# Adding log(intst)^2 to the above regression model we have,
+sq <- i^2
+model14 <- lm(pr~d+i+sq+a+l+k$rooms+k$baths+k$age)
+summary(model14)
+
+# The model after adding [log(intst)]^2 can be written as follows;
+# log(price) = -3.79 + 0.1897*log(dist) + 1.9025*log(intst) - 0.113*[log(intst)]^2 + 0.514*log(area) + 0.1069*log(land) + 0.04947*rooms + 0.0899*baths - 0.0036*age with an R-square value of 61.78% and sample size of 321
+# The co-efficient of log(dist) has a t-value of about 3 which is pretty high and the co-efficients of log(intst) and log(intst)^2 are also quite high with an absolute value of about 4
+# Thus we can say that all these three variables are statistically significant, and also adding log(intst)^2 has a great impact on housing price. 
+
+cor(i,d)
+cor(sq,d)
+# We can also say that the incinerator distance and distance from interstate are highly correlated, and also have a big impact on the housing price in a non-linear way
+
+# Adding log(dist)^2 to the model above we get;
+sqq <- d^2
+model15 <- lm(pr~d+sqq+i+sq+a+l+k$rooms+k$baths+k$age)
+summary(model15)
+
+# From the above model we can say that the co-efficient of log(dist)^2 is about -0.1026 with a T-stat of about -1.105. This is not really statistically significant, so we can actually avoid any sort of complications by omitting this variable from the above model
+
+########################################2.7########################################################################################################
+
+fin <- fread('wage1.csv')
+summary(fin)
+
+wh <- log(fin$wage)
+squ <- (fin$exper)^2
+
+model16 <- lm(wh~educ+exper+squ,data=fin)
+summary(model16)
+
+# The above model can be written as follows; log(wage) = 0.1263 + 0.09062*educ + 0.04097*exper - 0.000714*exper^2 with an R-square value of 30.03% and a sample size of 526 
+
+abs(qt(0.01,522))
+# The critical value of the above model at the 1% significance level is about 2.334
+
+# The absolute t-value for exper^2 is about 6.139. Since the t-value is greater than 2.334, we can declare statistical significance of the exper^2 variable to the above model. Hence we can 
+# say that exper^2 is statistically significant at the 1% level
+
+# It is given that %∆wage ~= 100(bˆ2 + 2bˆ3exper)∆exper. Now, in order to estimate the return to the fifth year of experience we have to set exper to 4 which gives us ∆exper = 1
+# Plugging this into the equation above gives us, %∆wage ~= 100(0.041 - 2*0.000714*4) ~= 3.5284%
+
+# Similarly we can estimate the return to the 20th year of experience by setting exper to 19 such that ∆exper = 1
+# Plugging this into the equation above gives us, %∆wage ~= 100(0.041 - 2*0.000714*19) ~= 1.3868%
+
+# The point where additional years of experience lowers the predicted wage can be calculated as follows; 
+# 0.041 - 2*0.000714*exper = 0 ---> exper ~= 0.041/(2*0.000714) ~= 28.71 years
+
+sum(fin$exper>28.7)
+# Therefore we can say that 121 out of 526 people have atleast 29 years of experience.
+
+###########################################2.8#########################################################################################################
+
+# The given model can be written as follows; log(wage) = b0 + b1educ + b2exper + b3educ*exper + u
+# Re-arranging the above equation we can write the return to another year of education in decimal form, keeping exper fixed as follows;
+# ∆log(wage) = b1∆educ + b3∆educ*exper = ∆educ(b1 + b3exper) => ∆log(wage)/∆educ = b1 + b3exper
+# Thus it is clear that the approximate proportionate change in the wage, given one more year of education is b1 + b3exper
+
+# The null hypothesis that the return to education does not depend on the level of experience can be written as, H0: b3 = 0.
+# Assuming that education and experience interact positively with each other, we can say that people with more experience are more productive when given another year of education
+# Hence, we can conclude that b3 > 0 is the appropriate alternative hypothesis
+
+wa <- fread('wage2.csv')
+summary(wa)
+
+v <- log(wa$wage)
+
+model17 <- lm(v~educ+exper+educ*exper,data=wa)
+summary(model17)
+
+# The above model can be written as;
+# log(wage) = 5.949 + 0.044*educ - 0.0215*exper + 0.0032*educ.exper with an R-square value of approximately 13.49% and sample size of 935
+
+abs(qt(0.05,931))
+# The critical value for the 5% level is about 1.6465
+
+# The t-statistic of the null can be calculated as follows;
+# T-stat = 0.003203/0.001529 = 2.0948
+# Hence, it is clear from the above calculation that t-stat is greater than the critical value. Hence we reject the null hypothesis that b3 = 0 against the alternative, which is
+# b3 > 0 at the 5% significance level
+
+# It is given that theta1 = b1 + 10b3 => b1 = theta1 - 10b3
+# By substituting, we can rewrite the above regression equation model as log(wage) = b0 + theta1educ + b2exper + b3educ(exper-10)
+ex <- wa$exper - 10
+model18 <- lm(v~educ+exper+educ*ex,data=wa)
+summary(model18)
+
+qt(0.05,931)
+
+# From the above model, we get the co-efficient of educ i.e, theta1 as 0.0761 and the se(theta1) as 0.006615
+# Thus, we can write the confidence interval for theta1 at 5% confidence level as 0.0761 +/- 1.646*0.006615 i.e, 0.0652 to 0.08698
+
+##################################################2.9#####################################################################################
+
+gp <- fread('gpa2.csv')
+summary(gp)
+
+squareterm <- gp$hsize^2
+model19 <- lm(sat~hsize+squareterm,data=gp)
+summary(model19)
+
+# The above model can be written as follows; sat = 997.98 + 19.814*hsize - 2.131*hsize^2 with an R-square value of approximately 0.76% and a sample size of 4137
+# The t-stat value of the hsize^2 term can be calculated as follows; -2.131/0.549 ~= -3.87. This means that the quadratic term hsize^2 is statistically significant 
+
+# To find the optimal high school size, we will have to find the size that maximizes SAT score.
+# This can be calculated by taking the derivative with respect to hsize and setting it equal to zero.
+
+# We can write d(sat)/d(hsize) = 19.814 - 4.262hsize = 0 ==> hsize ~= 19.814/4.262 ~= 4.64
+# This says that, given the hsize in hundreds of students, the optimal class size to improve SAT performance would be approximately 465 students
+
+# The analysis above is not representative of all the high-school seniors because, not all the seniors would have taken their SAT's. There will be so many students who never took the SAT's in the first place
+
+# Using log(sat) as the dependant variable, we can write the above equation as follows;
+
+model191 <- lm(log(sat)~hsize+squareterm,data=gp)
+summary(model191)
+
+# The above model can be written as follows;
+# log(sat) = 6.896 + 0.0196*hsize - 0.002087*hseize^2 with an R-square value of 0.7% and sample size of 4137
+# The optimal class size can be written as => b1/(2*b2)  => hsize = 0.0196/0.004174 ~= 4.6957
+# This says that, given the hsize in hundreds of students, the optimal class size to improve SAT performance would be approximately 470 students. There is a difference of just 5 students comapring both the models.
+
+#################################################2.10######################################################################################
+
+hp <- fread('hprice1.csv')
+summary(hp)
+
+model20 <- lm(log(price)~log(lotsize)+log(sqrft)+bdrms,data=hp)
+summary(model20)
+
+# The above model can be written as follows;
+# log(price) = -1.297 + 0.16797*log(lotsize) + 0.70023*log(sqrft) + 0.03696*bdrms with an R-square value of 64.3% and a sample size of 88
+
+# when lotsize = 20,000, sqrft = 2,500, and bdrms = 4 the above model can be written as follows;
+# log(price) = -1.297 + 0.16797*log(20000) + 0.70023*log(2500) + 0.03696*4 = 5.9929
+# Therefore the predicted value of log(price) = 5.9929 
+
+sum(exp(model20$residuals))/nrow(hp)
+# The predicted price of the house can be calculated as follows: 1.016348*exp(5.9929) = 407.123 thousand dollars
+
+# Let us compare the above model to one without log functions
+model21 <- lm(price~lotsize+sqrft+bdrms,data=hp)
+summary(model21)
+
+# The above model can be written as 
+# price = -21.77 + 0.002068*lotsize + 0.1228*sqrft + 13.85*bdrms with an R-square value of 67.24% and a sample size of 88 
+# Comparing the two models from above, it is clear that the R-square value is 64.3%, which means that approximately 64% of the variation in the price is explained by the 
+# independent variable, when compared to an R-square of 67% for the second model. It is always better to have lesser variance in the model.
+
+
+
+
+
+
+
+
+
+
+
