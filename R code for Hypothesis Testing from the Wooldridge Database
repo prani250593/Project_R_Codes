@@ -1,0 +1,399 @@
+# Project_R_Codes
+# #PS1:Pranav Kalyanpur
+#pxk174430
+setwd("~/Desktop/Data 1 - BAR")
+
+install.packages("data.table")
+install.packages("tidyverse", dependencies=TRUE)
+install.packages("DBI")
+install.packages("RSQLite")
+
+library(data.table)
+library(DBI)
+library(RSQLite)
+library(tidyverse)
+
+
+############### 1.1 ################################################
+# downloaded the table using DB Browser for sqliteS because it was throwing an error fpr the %>% operator in dBConnect
+wage1 <- fread("wage1.csv")
+summary(wage1)
+mean(wage1$educ)
+# The average education level in the sample is 12.56274 years
+max(wage1$educ)
+# The highest years of education is 18 years
+min(wage1$educ)
+# The lowest years of education is 0 years
+
+mean(wage1$wage)
+# The average hourly wage in the sample is 5.909 dollars. Considering the fact that the maximum wage is 25 dollars, the average hourly wage is low.
+
+# According to the Economic report of the President 2011, the CPI for 1976 and 2010 are 56.9 and 218.056 respectively
+# The average hourly wage in the sample is 5.909 dollars as calculated before for 1976 dollars. Therefore the average hourly wage for 2010 would be (CPI(2010)/CPI(1976))*5.909 = (218.056/56.9)*5.909
+# = 22.644 dollars. Therefore the average hourly wage in 2010 is 22.644 dollars, which seems very reasonable.
+
+sum(wage1$female)
+# The number of women in the sample are 252
+
+max(wage1$index)
+# The total number of people in the sample are 526. Hence the number of men in the sample are 526 - 252 = 274
+
+summary(wage1$index)
+
+################ 1.2 ########################################################################################
+
+meap01 <- fread("meap01.csv")
+
+summary(meap01)
+
+max(meap01$math4)
+#The largest value od math4 is 100
+
+min(meap01$math4)
+#The smallest value of math4 is 0
+#The range being 0-100, makes sense since the average is also 71.91 which is well within the range. The range is definitely a feasible one. 
+
+max(meap01$index)
+# The total samples is 1822
+
+sum(meap01$math4 == '100')
+# 38 schools have a perfect pass rate on the math test
+# Therefore this would be (38/1822)*100 = 2.085% of the total sample.
+
+sum(meap01$math4 == '50')
+# 17 schools have pass rates of exactly 50%
+
+mean(meap01$math4)
+# The average pass rate for the math test is 71.090%
+
+mean(meap01$read4)
+# The average pass rate for the reading test is 60.06188
+# Therefore it is clear that the reading test is harder to pass with an average pass rate of 60.06188%
+
+cor(meap01$math4,meap01$read4)
+# The correlation between math and reading tests (math4 and read4) is 0.8427281. This shows that there is a high correlation between the math and reading scores
+# which is almost reaching the +1 mark
+
+mean(meap01$exppp)
+# The average expenditure per pupil is 5194.865 dollars
+
+summary(meap01)
+sd(meap01$exppp)
+# The expenditure per pupil has a standard deviation of 1091.89 dollars
+sum(5194.865,1091.89)
+# Mean plus one standard deviation is 6286.755 dollars
+sum(5194.865,-1091.89)
+# Mean minus one standard deviation is 4102.975
+# Therefore we can say that there is a large variation in per pupil spending
+
+# School A Spends $6000 per student and School B spends $5500 per student. School A exceeds School B's spending by (500/5500)*100 = 9.09%
+log(6000) - log(5500)
+
+# The value of the natural log expression is 0.087011 which is about 8.7 percent, which is comparatively lower than the previous calculation
+
+####################1.3##################################################################################################
+
+fourk <- fread("401K.csv")
+head(fourk)
+summary(fourk)
+table(fourk$prate)
+table(fourk$mrate)
+mean(fourk$prate)
+# The average participation rate in the sample of plans is 87.36291
+mean(fourk$mrate)
+# The average match rate in the sample of plans is 0.7315124
+
+str(fourk)
+head(fourk$prate)
+head(fourk$mrate)
+plot(fourk$prate ~ fourk$mrate)
+model1 <- lm(fourk$prate ~ fourk$mrate)
+summary(model1)
+
+# Based on the linear regression model, the R-square value is 0.0747 and the sample size is 1534 observations
+# The model is as follows 
+# prate-hat = 83.0755 + 5.8611*mrate-hat where beta0 = 83.0755 and beta1 = 5.8611
+
+# The intercept on the equation is 83.0755 and the coefiicient on mrate is 5.8611
+
+# The predicted p-rate when m-rate is 3.5 is prate-hat = 83.0755 + (5.8611*3.5) = 103.58935 
+# The predicted value of p-rate is not reasonable because when mrate = 3.5, every 1$ contribution by every worker should be matched by 350 cents (3.5$) by the firm 
+# which is not the case here because p-rate is coming up to 103.58935 cents (1.03$) which is way lower than what is expected
+
+# The R-square value of the model is 7.47%, which means that 7 percent variability in the independent variable (which in this case is mrate) is explained by the dependent variable
+# (which in this case is p-rate)
+
+######################1.4###################################################################################
+
+ceo <- fread('ceosal2.csv')
+summary(ceo)
+
+mean(ceo$salary)
+# The average salary in the sample is 865.9 thousand dollars
+mean(ceo$ceoten)
+# The average tenure in the sample is 7.954802 years
+
+sum(ceo$ceoten == '0')
+# 5 CEO's are in their first year of tenure
+
+max(ceo$ceoten)
+# The longest tenure as a CEO is 37 years
+
+table(ceo$salary)
+table(ceo$ceoten)
+sal <- log(ceo$salary)
+
+str(ceo$salary)
+str(ceo$ceoten)
+
+head(ceo$salary)
+
+plot(sal ~ ceo$ceoten)
+model2 <- lm(sal~ceo$ceoten)
+summary(model2)  
+
+# So, the above model has a sample size of 177 and an R-square value of 0.01316 or 1.31% which means that 1.31% variability in the dependent variable (log(salary)) can be explained by the independent variable (ceoten)
+# The model can be written as follows: log(salary) = 6.505498 + (0.009724)ceoten. We can conclude that for every 1 year increase in the tenure of the CEO, the salary increases approximately by 9.7%
+
+########################1.5###############################################################################
+
+wage <- fread("wage2.csv")
+summary(wage)
+
+mean(wage$wage)
+# The average salary in the sample is 957.9455 dollars
+mean(wage$IQ)
+# The average IQ in the sample is 101.2824 points
+
+sd(wage$IQ)
+# The standard deviation of IQ in the sample is 15.05264 which is equal to the standardized value 
+
+# Simple linear regression model
+plot(wage$wage ~ wage$IQ)
+model3 <- lm(wage$wage ~ wage$IQ)
+summary(model3)
+
+# The model has a sample size of 935 observations and an R-square value of 0.0955 or 9.55%. The model can be written as follows:
+# wage = 116.9916 + 8.3031*IQ
+
+# Now, we can conclude that every one point increase in IQ increases wage by 8.3031 dollars. Therefore, when IQ increases to 15 points, the predicted wage increases by approximately 15*8.3031 = 124.5465 dollars
+# Yes, IQ explains most of the variation in the wage/salary since it is the independent variable and the salary is the dependent variable. Any change in the IQ directly affects the salary/wage as well.
+
+# Based on the model above, wage = 116.9916 + 8.3031*IQ
+# wage(1 IQ point) = 116.9916 + 8.3031 (1) = 125.2947 dollars
+# wage(16 IQ points) = 116.9916 + 8.3031*15 = 241.5381 dollars
+
+# Now, in the model where every 1 point increase in IQ has the same effect on wage, the approximate percentage increase in the predicted wage when the IQ increases by 15 points is,
+# (241.5381-125.2947)/125.2947 = 0.9277*100 which is approximately a 92.77 percent increase in the predicted wage
+
+############################1.6########################################################################################
+
+mea <- fread("meap93.csv")
+summary(mea)
+
+plot(mea$math10 ~ mea$expend)
+model4 <- lm(mea$math10 ~ mea$expend)
+summary(model4)
+
+# The relationship between the pass rate and the spending per student/pupil is clearly depicted by the model above
+# The model is math10 = 13.36 + 0.002456*expend
+
+# So, we can conclude that for every additional dollar spent, the pass rate increases by 0.002456%, which is clearly a diminishing effect
+
+exp <- log(mea$expend)
+plot(mea$math10 ~ exp)
+model5 <- lm(mea$math10 ~ exp)
+summary(model5)
+
+# The model above can be written as follows, math10 = -69.341 + 11.164log(expend) where beta0 = -69.341 and beta1 = 11.1641
+
+# In the above model, expend has a log term associated with it, which signifies that beta1/10 is the increase in math10 when there is a 10% increase in expenditure per pupil (expend)
+
+# Using the model estimated in the previous step, we can conclude that the sample size is 408 and the R-squared value is 0.02966 or 2.96%
+# We can conclude from the above model that every one point increase in expend will lead to a 1.1% increase in math10 
+
+# In this data set, as we can see the intercept is negative i.e, -69.341 and we are computing the log(expend). Due to this math10 will never be greater than 100 and there is no need to worry about it.
+
+###########################1.7#######################################################################################
+
+h <- fread('hprice1.csv')
+summary(h)
+
+plot(h$price~h$sqrft+h$bdrms)
+model7 <- lm(h$price~h$sqrft+h$bdrms)
+summary(model7)
+
+# The above model has a sample size of 88 and an R-square value of 63.19%. It can be written in equation form as follows;
+# price = -19.31500 + 0.12844*sqrft + 15.19819*bdrms
+
+# Now let us consider a constant square footage of 2000 and let us consider 1 and 2 bedroom houses
+# 1 bedroom house with 2000 sqft: price = -19.31500 + 0.12844*2000 + 15.19819*1 = 252.7632 thousand dollars
+# 2 bedroom house with 2000 sqft: price = -19.31500 + 0.12844*2000 + 15.19819*2 = 267.9614 thousand dollars
+# So the estimated price increase from a 1 bedroom price to a 2 bedroom, keeping sqrft constant is 15.1982 thousand dollars
+
+# 1 bedroom house with 2000 sqft: price = -19.31500 + 0.12844*140 + 15.19819*1 = 13.86479 thousand dollars
+# 2 bedroom house with 140 sqft: price = -19.31500 + 0.12844*140 + 15.19819*2 = 29.06298 thousand dollars
+# So the estimated price increase from a 1 bedroom price to a 2 bedroom, with a sqrft of 140 is 15.19819 thousand dollars
+# This is exactly similar to the answer in the second part
+
+# From the model above, it is clear that about 63.19% of the variation in price is explained by the sqrft and number of bedrooms
+
+# For a sqrft of 2438 and 4 bedroom house, the predicted selling price (price-hat) can be calculated from the OLS regression line using the following equation;
+# price-hat = -19.31500 + 0.12844*2438 + 15.19819*4 = 354.6145 thousand dollars
+
+# It is given that the selling price for the first house is $300,000(price = 300)
+r <- resid(model7)
+?resid
+resid(lm(h$price~h$sqrft+h$bdrms))
+
+# The residual for this house is -54.6052. A negative residual generally means that the actual value is lesser than the predicted value. Thereby, we can conclude that the buyer underpaid for the house.
+
+
+####################################1.8##################################################################################
+
+ceo <- fread('ceosal2.csv')
+summary(ceo)
+
+l1 <- log(ceo$salary)
+l2 <- log(ceo$sales)
+l3 <- log(ceo$mktval)
+
+
+plot(l1~l2+l3, data=ceo)
+model8 <- lm(l1~l2+l3, data=ceo)
+summary(model8)
+# The constant elasticity variety basically means that a model is linear in elasticities(which are nothing but percentage changes). 
+# The following model relates the annual salary to the market value and annual sales and is a constant elasticity model ; and can be illustrated as follows
+# log(salary) = 4.62092 + 0.16213*log(sales) + 0.10671*log(mktval) with a sample size of 177 and an R-square value of approximately 29.91%
+
+# Adding profits to the model above we get
+
+l4 <- ceo$profits
+plot(l1~l2+l3+l4, data=ceo)
+model9 <- lm(l1~l2+l3+l4, data=ceo)
+summary(model9)
+
+# The model with profits added can be illustrated as follows
+# log(salary) = 4.687 + 0.1614*log(sales) + 0.09753*log(mktval) + 0.00000356*profits with a sample size of 177 and an R-square value of approximately 29.93%
+# As we can observe from the above equation, the co-efficient of profits is almost 0, which clearly means that profit has no effect on salary and has very little to add to the model. 
+
+# Adding ceoten to the model we get,
+l5 <- ceo$ceoten
+str(l5)
+plot(l1~l2+l3+ ceoten + profits, data=ceo)
+model10 <- lm(l1~l2+l3 + profits + ceoten, data=ceo)
+summary(model10)
+
+# The model with ceoten added can be illustrated as follows
+# log(salary) = 4.66 + 0.1622*log(sales) + 0.09753*log(mktval) + 0.00*profits + 0.0168*ceoten
+# This means that, for every one year increase in ceoten, the salary increases by approximately 1.6%
+
+cor(l3,ceo$profits)
+# The correlation co-efficient between log(mktval) and profits is 0.7768976 which means that they are highly correlated. Profits and log(mktval) are two estimators that go hand in hand and it would be difficult to 
+# analyze their individual effects on log(salary)
+
+############################################1.9#############################################################################
+
+att <- fread('attend.csv')
+summary(att$atndrte)
+# The maximum attendance rate is 100, minimum is 6.25 and the average is 81.71
+summary(att$priGPA)
+# The maximum priGPA is 3.93, minimum is 0.857 and the average is 2.587
+summary(att$ACT)
+# The maximum ACT is 32, minimum is 13 and the average is 22.51
+
+plot(atndrte~priGPA+ACT, data=att)
+model11 <- lm(atndrte~priGPA+ACT, data=att)
+summary(model11)
+
+# The above model can be written as follows;
+# atndrte = 75.7 + 17.261*priGPA - 1.717*ACT with a sample size of 680 and R-square value of 29.06%
+# We can say that an intercept of 75.7 is the predicted percentage of classes attended by students with a priGPA of 0 and an ACT score of 0. According to me the intercept has some meaning but, the interpretation is not very useful
+
+# Let us now analyze the slope co-efficients. Firstly we can say that, every point increase in the GPA leads to an approximate 17% increase in the classes attended which makes sense because students who have higher GPA attend more classes generally.
+# Secondly we can observe that every one point increase in the ACT score leads to a 1.7% decrease in the class attendance rate, which is quite unusual.
+
+# When priGPA = 3.65 and ACT = 20, the predicted atndrte is atndrte = 75.7 + 17.261*3.65 - 1.717*20 = 104.3627
+# This means that these students attend more than 100% of the classes, which is not possible. Now, from the table att, the number of students with gpa = 3.65 and ACT score = 20 can be calculated as follows
+
+which(att$priGPA==3.65 & att$ACT==20)
+# It is clear from the above calculation that only one student has a priGPA of 3.65 and ACT score of 20 with an attendance rate of 87.5. This means that the predicted value is not reasonable.
+
+# Case 1: priGPA = 3.1 and ACT = 21, atndrte = 75.7 + 17.261*3.1 - 1.717*21 = 93.1521
+# Case 2: priGPA = 2.1 and ACt = 26, atndrte = 75.7 + 17.261*2.1 - 1.717*26 = 67.3061
+# The predicted difference in the attendance rates is 93.1521 - 67.3061 = 25.846
+
+#############################################1.10######################################################################################################
+
+htv <- fread('htv.csv')
+summary(htv)
+
+summary(htv$educ)
+range(htv$educ)
+# The range of the educ variable in the sample is 6 to 20, which is basically 14
+sum(htv$educ==12)
+max(htv$index)
+# It is clear from the above calculation that 512/1229 = 41.65% of the men completed 12th grade but no higher grade.
+
+mean(htv$educ)
+mean(htv$fatheduc)
+mean(htv$motheduc)
+# From the above calculations we can conclude that the average education levels for men and parents are in the ranges of 12-13, which is a pretty decent education level
+
+plot(educ~motheduc+fatheduc, data=htv)
+model12 <- lm(educ~motheduc+fatheduc, data=htv)
+summary(model12)
+# The above model can be written as follows: educ = 6.96 + 0.3042*motheduc + 0.1903*fatheduc with a sample size of 1230 and R-square value of 24.93%
+# From the above equation, we can conclude that 24.93% variation in the education can be explained by the parent's education
+# The co-efficient on motheduc is 0.3042 which means that every one-point increase in mother's education will lead to approximately 30% increase in the education level
+
+plot(educ~motheduc+fatheduc+abil, data=htv)
+model13 <- lm(educ~motheduc+fatheduc+abil, data=htv)
+summary(model13)
+
+# Adding abil to the above model gives us; educ = 8.45 + 0.1891*motheduc + 0.1111*fatheduc + 0.5025*abil with a sample size of 1230 and R-square value of 42.75%
+# Adding variable abil to the model has a tvalue of 19.54, which is way greater than 2. This means that the variable abil effectively helps to determine the variaiton in educ
+
+# abil in quadratic form 
+sq <- (htv$abil)^2
+plot(educ~motheduc+fatheduc+abil+sq, data=htv)
+model14 <- lm(educ~motheduc+fatheduc+abil+sq, data=htv)
+summary(model14)
+
+# A model where abil apppears in quadratic form can be written as follows, educ = 8.2402 + 0.1901*motheduc + 0.1089*fatheduc + 0.4014*abil + 0.051*abil-sq with a sample size of 1230 and an R-square value of 44.44%
+# Using principles of calculus, we get
+# d(Educ)/d(abil) = 0.4014 + 0.10abil = 0
+# abil* = -0.4014/0.10 = -4.014
+
+# Now let us find the second derivative of abil which gives us, d2(Educ)/d2(abil) = 0.10 > 0 and therefore we can conclude that we indeed have a minimum
+
+length(which(htv$abil < -4.014))
+# It is clear that 14 out of 1230 men have ability level less than -4.014, which is a small fraction. This is important because only 14 individuals have higher expected education levels compared to the individuals to the right of -4.014.
+
+# Conidering the model, educ = 8.2402 + 0.1901*motheduc + 0.1089*fatheduc + 0.4014*abil + 0.051*abil-sq where motheduc is 12.18 and fatheduc is 12.45 we get;
+# educ = educ = 8.2402 + 0.1901*12.18 + 0.1089*12.45 + 0.4014*abil + 0.051*abil-sq = 11.91142 + 0.4014*abil + 0.051*abil-sq
+
+
+# Let us now plot the above equation;
+htv$educ = 11.91142 + 0.4014*(htv$abil) + 0.051*sq
+plot(htv$educ~htv$abil)
+# The above expression depicts the graphical relationship between the predicted education and abil, having specific values for motheduc and fatheduc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
