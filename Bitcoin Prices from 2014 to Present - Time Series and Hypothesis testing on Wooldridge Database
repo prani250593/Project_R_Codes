@@ -1,221 +1,9 @@
-# Project_R_Codes
-# Problem Set 3
-# Pranav Kalyanpur
-# pxk174430
-
-##############################################3.1#################################################################################################################
-
-rm(list=ls(all=TRUE))
-library(data.table)
-library(ggplot2)
-library(RColorBrewer)
-library(tidyverse)
-library(broom)
-
-m <- fread('mlb1.csv')
-summary(m)
-
-model1 <- lm(log(salary)~years+gamesyr+bavg+hrunsyr+rbisyr+runsyr+fldperc+allstar+frstbase+scndbase+thrdbase+shrtstop+catcher,data=m)
-summary(model1)
-
-# 3.1(i) The null hypothesis that controlling for other factors, catchers and outfielders earn, on average, the same amount can be written as follows;
-# h0 : b13 = 0, h1 : b13 ne(=) 0
-# From the above model it is clear that the t-statistic value of b13 is 1.931
-# The critical value can be calculated as follows;
-
-abs(qt(0.05,339))
-# The critical value is 1.6493
-# Since the t-statistic is greater than the critical value, we reject the null hypothesis that b13 = 0 and we also conclude that b13 is statistically significant to the model
-# The estimated salary differential between the catchers and the outfielders can be calculated as follows;
-# The catchers salary is higher than the outfielders salary by, (exp(0.2535592)-1)*100 = 28.86%
-
-# 3.1(ii)The null hypothesis that there is no difference in average salary across positions, once other factors have been controlled for can be written as follows; 
-# H0: b9=b10=b11=b12=b13=0
-
-aov(log(salary)~years+gamesyr+bavg+hrunsyr+rbisyr+runsyr+fldperc+allstar+frstbase+scndbase+thrdbase+shrtstop+catcher,data=m)
-
-# Since the p-values of all positions are greater than 0.05, we fail to reject the null hypothesis and can conclude that there is not a significant difference in salaries
-# across all positions, once other factors have been controlled for.
-
-# 3.1(iii)The hypothesis test in the previous step tells us that all positions are not statistically significant and there is no significant difference in salaries across all positions, keeping all other factors constant.
-# However, there is an exception in case of the catchers, where the cumbersome nature of the position affects the salary indirectly. 
-
-#####################################################3.2#############################################################################################
-
-gp <- fread('gpa2.csv')
-summary(gp)
-sq <- (gp$hsize)^2
-model2 <- lm(colgpa~hsize+sq+hsperc+sat+female+athlete,data=gp)
-summary(model2)
-
-# The above model can be written as follows; colgpa = 1.241 - 0.05685*hsize + 0.004675*hsize^2 - 0.01321*hsperc + 0.00164*sat + 0.154*female + 0.1693*athlete with an R-square value of 29.25% and sample size of 4137
-
-# My expectations for the co-efficients are that b3 should be with a negative sign because the colgpa should normally increase for smaller values of the academic percentile;  b4 should be with a positive sign because, as the combined SAT score increases, the colgpa also increases  
-# I am unsure about the co-efficients b1,b2, b5 and b6, which are for the class size, athlete and female. This is because it is unsure whether class size or student-athletes will increase or decrease the gpa.
-
-abs(qt(0.05,4130))
-# The equation is estimated in the form of the model in the above steps. It is clear from the model that the estimated salary differential between the athletes and non-athletes is 0.6193, which means that
-# athletes are predicted to have a 0.6193 higher gpa than non-athletes. To test for statistical significance, we can first note down the t-stat which is 4 and the critical value at 95% significance level which is approximately 1.645
-# Since the t-stat is greater than the critical value, we can declare that athletes are statistically significant to the above model.
-
-# Dropping sat from the above model and re-estimating we get
-model3 <- lm(colgpa~hsize+sq+hsperc+female+athlete,data=gp)
-summary(model3)
-
-# The above model can be written as follows;
-# colgpa = 3.048 - 0.05340*hsize + 0.00532*hsize^2 - 0.01714*hsperc + 0.0581*female + 0.00545*athlete with an R-square value of 18.85% and a sample size of 4137
-# It is clear from the above model that the co-efficient of athletes is now 0.00544, which is lower when compared to the model including sat scores. This is probably because athletes tend to score lower SAT scores on an average when compared to non-athletes
-# To check for statistical significance, we have the tstat as 0.122 and the critical value as 1.6452 approximately. Since the t-stat is lesser than the critical value, we can now declare that athlete is not significant to the model without SAT scores
-
-gp$maleathl <- (1-gp$female)*(gp$athlete)
-gp$malenonathl <- (1-gp$female)*(1-gp$athlete)
-gp$femaleath <- gp$female*gp$athlete
-
-model4 <- lm(colgpa~hsize+sq+hsperc+sat+femaleath+malenonathl+maleathl,data=gp)
-summary(model4)
-
-# The above model can be written as; colgpa = 1.396 - 0.0568hsize + 0.00467hsize^2 - 0.01321hsperc + 0.00164sat + 0.1751femaleath - 0.154malenonathl + 0.0128maleathl with an R-square value of 29.25%
-
-abs(qt(0.05,4129))
-# The co-efficient on female athletes is 0.1751, which means that female athletes are predicted to have a 0.1751 gpa more than female non-athletes. To test the null hypothesis that there is no
-# ceterius paribus effect on female athletes and female non-athletes, we can consider the tstat for female athletes which is in this case; 2.084 and the critical value is 1.6452. 
-# Since the t-stat is greater than the critical value, we reject the null hypothesis
-
-# To check whether the effect of sat on colgpa differ by gender, let us introduce another variable that calculates the female sat scores
-femsat <- gp$female*gp$sat
-
-model5 <- lm(colgpa~hsize+sq+hsperc+sat+female+athlete+femsat,data=gp)
-summary(model5)
-
-model6 <- lm(colgpa~hsize+sq+hsperc+sat+femaleath+malenonathl+maleathl+femsat,data=gp)
-summary(model6)
-
-# After adding the variable femsat to both the models, we can see that there is a very minute difference in the co-efficients. The co-efficient of femsat is about 0.000054 in both cases approximately, which shows that 
-# the effect of sat scores does not differ by gender
-
-###################################################################3.3########################################################################
-
-l <- fread('loanapp.csv')
-summary(l)
-
-# If there is a discrimination against minorities, it is only fitting that the sign on b1 has to be positive, which means that white people have a higher chance of getting their loans approved compared to the non-whites
-
-model7 <- lm(approve~white,data=l)
-summary(model7)
-abs(qt(0.05,1987))
-# The above model can be written as approve = 0.70779 + 0.20060*white with an R-square value of approximately 4.8% and sample size of 1989
-# To test statistical significance, we need to consider the t-stat value which is 10.11 and the critical value is 1.6456
-# Since the t-stat is way greater than the critical value, we can say that white is statistically significant. It is comparatively large
-# This also means that when white = 1, the probability of loan approval becomes approve =  0.70779 + 0.20060 = 0.90839
-
-# Adding hrat, obrat, loanprc, unem, male, married, dep, sch, cosign, chist, pubrec, mortlat1, mortlat2, and vr to the above model we get;
-
-model8 <- lm(approve~white+hrat+obrat+loanprc+unem+male+married+dep+sch+cosign+chist+pubrec+mortlat1+mortlat2+vr,data=l)
-summary(model8)
-
-# From the above model, we can conclude that the co-efficient of white now becomes 0.128820. But, it is safe to say that there is still discrimination against non-whites, which is evident from
-# the variables like loanprc, married, pubrec,mortlat1, mortlat2 and vr; which all have negative signs which go against the loan approval
-
-# Adding the variable white and obrat when they interact with each other to the above model;
-# We get
-mul <- l$white*l$obrat
-model9 <- lm(approve~white+hrat+obrat+loanprc+unem+male+married+dep+sch+cosign+chist+pubrec+mortlat1+mortlat2+vr+mul,data=l)
-summary(model9)
-abs(qt(0.05,1954))
-# From the above model, we can get the t-stat for obrat*white as 3.53 and the critical value is about 1.6453
-# Since the t-stat is greater than the critical value, we can declare that the interaction term which is white*obrat is statistically significant to the model
-
-# When the obrat = 32, we can include the interaction term white*(obrat-32) and find the confidence interval
-
-mul1 <- l$white*(l$obrat-32)
-model10 <- lm(approve~white+mul1+hrat+obrat+loanprc+unem+male+married+dep+sch+cosign+chist+pubrec+mortlat1+mortlat2+vr,data=l)
-confint(model10)
-summary(model10)
-# The coefficient on white is basically the race differential when obrat = 32; which is approximately 0.113
-# The confidence interval for this effect is 0.07325 to 0.15243
-# This means that there is still signs of discrimination against non-whites since 0 is not included in the confidence interval for white. 
-
-#####################################################################3.4####################################################################################################
-install.packages('lmtest')
-install.packages('sandwich')
-library(lmtest)
-library(sandwich)
-hp <- fread('hprice1.csv')
-summary(hp)
-
-model11 <- lm(price~lotsize+sqrft+bdrms,data=hp)
-coeftest(model11)
-coeftest(model11,vcov = vcovHC)
-
-# The above model can be written as price = -21.77 + 0.00207*lotsize + 0.123*sqrft + 13.85*bdrms
-
-# Performing co-eff tests for heteroskedasticity, we find that the robust standard error for lotsize is almost ten times for the homoskedastic data when compared to the 
-# heteroskedastic data, which means that lotsize is much less significant, where the t-stat value falls drastically from 3.22 to 0.2893. Now, considering the sqrft and bdrms variables, 
-# we can conlcude that the t-stat on sqrft falls but still making it significant; and the robust standard error for bdrms barely changes as well, thereby making it significant as well since there is a very minute 
-# change in the t-stat value.
-
-# Using log interpretations we can rewrite the above equation as follows;
-
-model12 <- lm(log(price)~log(lotsize)+log(sqrft)+bdrms,data=hp)
-coeftest(model12)
-coeftest(model12,vcov=vcovHC)
-
-# Adding log versions of the variables, we can see that there is no significant difference between the homoskedastic and heteroskedastic robust standard errors. log(lotsize) and log(sqrft) have relatively high t-statistic values and hence are relatively significant
-# However, we can clearly see that bdrms is not significant looking at the p-values for both cases, which are way greater than 0.05.
-
-# We can say that using the logarithmic transformation of the dependent variable mitigates or controls heteroskedasticity besides not being able to eliminate it completely. 
-# This is especially true in this case because no important conlcusions on the log(price) in the model above depends on the standard error.
-
-
-##################################################3.5################################################################################################################
-
-g <- fread('gpa1.csv')
-summary(g)
-
-# A model relating colGPA to hsGPA, ACT, skipped, and PC can be illustrated as follows;
-
-model13 <- lm(colGPA~hsGPA+ACT+skipped+PC,data=g)
-summary(model13)
-
-# The model can be written as follows; colGPA = 1.3565 + 0.41295*hsGPA + 0.01334*ACT - 0.07103*skipped + 0.12444*PC with an R-square value of 25.93% and sample size of 141
-# The OLS residuals can be extracted as follows;
-
-res <- resid(model13)
-u2 <- res^2
-fit <- fitted(model13)
-summary(fit)
-model14 <- lm(u2~fit + I(fit^2),data=g) 
-summary(model14)
-
-# The white test for heteroskedasticity has been performed and the model can be written as follows; u2 = -0.3218 + 0.129599*colGPA-pred + 0.002946*colGPA-pred^2 with an R-square value of approximately 4.9% and sample size of 141
-# We have calculated an F-stat of 3.581, and with 2 and 138 degrees of freedom we get a p-value of about 0.03045. Hence at the 5% significance level, we declare that
-# heteroskedasticity is present in the standard errors of colGPA
-
-# It is clear from the above model that all the fitted values are positive given that the smallest value is 2.547 and the largest value is 3.48
-
-# Using the WLS method of regression to the above model with 1/colGPA we get
-
-model15 <- lm(colGPA~hsGPA+ACT+skipped+PC,weights=1/fit, data=g)
-summary(model15)
-
-# The above WLS model can be written as follows; colGPA = 1.37836 + 0.408*hsGPA + 0.01318*ACT − 0.07197*skipped + 0.12415*PC with an R-square value of 26.2% and sample size of 141
-
-# As we can see from the above models, there is no significant difference between the two co-efficients of PC and skipped classes in the OLS and WLS models. The R-square value of the WLS model is larger than the OLS model,
-# but these are not very comparable. From both the models, the respective p-values for skipped and PC are above 0.05 and hence we can declare that they are statistically significant
-
-coeftest(model15)
-coeftest(model15, vcov=vcovHC)
-
-# It is clear from the above model that the heteroskedasticity robust standard errors are not significantly different from the errors in the above equation, and all the co-efficients that were statistically significant are still significant.
-# The standard errors do not change much when compared to the previous part using the WLS model
-
-#########################################################3.6##################################################################################################
-
+# Time Series Analysis of Bitcoin Prices using ARIMA and Forecasting in R
 install.packages('plyr')
 install.packages('tseries')
 library(plyr)
 library(tseries)
-# 3.6 (1,2 and 3)
+
 # The data set files have been downloaded and the quaestion has been answered as follows:
 # Merging all data sets together by unique id DATE we get the following:
 # Reading the files and data sets we have
@@ -225,11 +13,11 @@ summary(merged_data)
 
 # Removing null values we then get
 merged_data<-na.omit(merged_data)
-# 3.6 (4)
+
 # Plotting the data time series in R
 ts.plot(merged_data)
 
-# 3.6 (5)
+
 # naive regression on spurious correlation with 
 modelbit <- lm(Price ~ SP500 + GOLDAMGBD228NLBM + DEXUSEU + DCOILWTICO,data=merged_data)
 summary(modelbit)
@@ -237,7 +25,7 @@ summary(modelbit)
 # a normal ols regression gives the following relation for the bitcoin price with the other variables and parameters = -25400 + 10.29*sp500 - 1.354*gold - 21.07.18*texas_oil + 29560*usd_eu_conv
 # This basically gives negative predictions along with horrible predictions for recent btc prices, which is also clearly depicted from the model above
 
-# 3.6 (6) Performing the kpss test on the bitcoin data, we get the dollowing to check the stationarity of the variables
+# Performing the kpss test on the bitcoin data, we get the dollowing to check the stationarity of the variables
 kpss.test(merged_data$Price,null="Level")
 kpss.test(merged_data$Price,null="Trend")
 kpss.test(diff(merged_data$Price),null="Level")
@@ -269,13 +57,13 @@ kpss.test(diff(merged_data$DEXUSEU),null="Trend")
 
 # We can conclude that each of the following series are level-stationary after performing the kpss test on each of them respectively, after taking the first differences. Similarly we can also check for the trend-stationary as well
 
-# 3.6 (7) Taking difference and performing regression on the differences of every series we get the following;
+# Taking difference and performing regression on the differences of every series we get the following;
 modeldiff <- lm(diff(Price) ~ diff(SP500) + diff(GOLDAMGBD228NLBM) + diff(DEXUSEU) + diff(DCOILWTICO),data=merged_data)
 summary(modeldiff)
 
 # We can conclude from the above model that all variables are statistically significant
 
-# 3.6 (8) Removing all data just before bitcoin starts to spike, we can plot the data as follows
+# Removing all data just before bitcoin starts to spike, we can plot the data as follows
 
 merged_data1 <- merged_data[which(merged_data$Date >= '2017-01-01'),]
 ts.plot(merged_data1)
@@ -285,7 +73,7 @@ ts.plot(merged_data1$DCOILWTICO)
 ts.plot(merged_data1$DEXUSEU)
 ts.plot(merged_data1$GOLDAMGBD228NLBM)
 
-# 3.6 (9) Plotting the ACF and PACF of the series we get the following plots
+# Plotting the ACF and PACF of the series we get the following plots
 
 acf(diff(merged_data1$Price))
 pacf(diff(merged_data1$Price))
@@ -296,7 +84,7 @@ pacf(diff(log(merged_data1$Price)))
 
 # The ACF and PACF plots are as illustrated as above
 
-# 3.6 (10) The best ARIMA model that can be fit to the time series bitcoin data model can be illustrated as follows;
+# The best ARIMA model that can be fit to the time series bitcoin data model can be illustrated as follows;
 # From the previous models we have max value is 10
 maxa <- 10
 outp <- matrix(0L,(maxa+1)^2,3)
@@ -315,7 +103,7 @@ outp <- data.table(outp)
 colnames(outp) <- c('p','q','AIC')
 outp[order(AIC)]
 
-# 3.6 (11) Forecast for the next 30 days of the bitcoin price can be done as follows;
+# Forecast for the next 30 days of the bitcoin price can be done as follows;
 
 install.packages('forecast')
 library(forecast)
@@ -324,7 +112,7 @@ steps <- 30
 future <- forecast(model18,steps)
 plot(future)
 
-# 3.6 (12) The periodogram for the data set is as follows
+# The periodogram for the data set is as follows
 install.packages('TSA')
 library(TSA)
 periodogram(log(merged_data1$Price))
@@ -332,7 +120,7 @@ periodogram(diff(log(merged_data1$Price)))
 
 # We can see that the periodogram has a lot of spikes, which means that data might be seasonal but cannot be seen clearly in the figure
 
-# 3.6 (13) Regression on the dummy variables during the week can be done as follows;
+# Regression on the dummy variables during the week can be done as follows;
 
 merged_data1$Date <- as.Date(merged_data1$Date)
 merged_data1$dow <- weekdays(merged_data1$Date)
@@ -345,7 +133,7 @@ modelbitregress <- lm(data = mergedbit, diff(log(Price)) ~ mo + tu + we + th + f
 summary(modelbitregress)
 periodogram(modelbitregress$residuals)
 
-# 3.6 (14) The VAR model that captures relationships between our 5 different variables is as follows;
+# The VAR model that captures relationships between our 5 different variables is as follows;
 install.packages('vars')
 library(vars)
 ft <- function(x){
@@ -359,7 +147,7 @@ VAR(bitc_var,p=3,type="both") %>% AIC
 modelfin <- VAR(bitc_var,p=1,type="both")
 summary(modelfin)
 
-# 3.6 (15) Forecasting the nest 30 days using the VAR model we get
+# Forecasting the nest 30 days using the VAR model we get
 
 predict (modelfin, steps=30)
 
